@@ -1,0 +1,210 @@
+!pip install xlsxwriter
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import nltk
+import textstat
+import re
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+import os
+import zipfile
+
+# Download required NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+
+def extract_article(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Print the HTML content for inspection
+    print(soup.prettify())
+
+    # Retrieve the article's title, handling the case when it's not found
+    title_element = soup.find('h1', class_='entry-title')
+    if title_element:
+        title = title_element.get_text()
+    else:
+        title = "Title not found"
+        print("Warning: Could not find article title.")
+
+    # Retrieve the article's content
+    article_body = soup.find('div', class_='td-post-content')
+    paragraphs = article_body.find_all('p')
+    article_text = "\n".join([p.get_text() for p in paragraphs])
+
+    return title, article_text
+
+# Function to save article content to a text file
+def save_article(url_id, title, article_text):
+    filename = f"{url_id}.txt"
+    with open(filename, 'w', encoding='utf-8') as file:
+        file.write(title + "\n\n" + article_text)
+
+# Function to load stop words from a directory
+def load_stop_words(directory):
+    stop_words = set()
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        if os.path.isfile(filepath): # Ensure the path is a file
+            with open(filepath, 'r', encoding='utf-8') as file:
+                stop_words.update(file.read().split())
+    return stop_words
+
+# Function to load positive and negative words, excluding stop words
+def load_sentiment_words(positive_file, negative_file, stop_words):
+    with open(positive_file, 'r', encoding='utf-8', errors='replace') as file: # Handle encoding errors in the positive words file
+        positive_words = set(file.read().split()) - stop_words
+
+    with open(negative_file, 'r', encoding='latin-1', errors='replace') as file: # Handle encoding errors in the negative words file
+        negative_words = set(file.read().split()) - stop_words
+
+    return positive_words, negative_words
+
+# Functions for text analysis
+def calculate_positive_score(text, positive_words):
+    words = word_tokenize(text)
+    positive_score = sum(1 for word in words if word.lower() in positive_words)
+    return positive_score
+
+def calculate_negative_score(text, negative_words):
+    words = word_tokenize(text)
+    negative_score = sum(1 for word in words if word.lower() in negative_words)
+    return negative_score
+
+def calculate_polarity_score(positive_score, negative_score):
+    return (positive_score - negative_score) / ((positive_score + negative_score) + 0.000001)
+
+def calculate_subjectivity_score(positive_score, negative_score, text):
+    words = word_tokenize(text)
+    total_words = len(words)
+    return (positive_score + negative_score) / (total_words + 0.000001)
+
+def calculate_avg_sentence_length(text):
+    sentences = sent_tokenize(text)
+    words = word_tokenize(text)
+    avg_sentence_length = len(words) / len(sentences)
+    return avg_sentence_length
+
+def calculate_percentage_complex_words(text):
+    words = word_tokenize(text)
+    complex_words = [word for word in words if textstat.syllable_count(word) > 2]
+    percentage_complex_words = (len(complex_words) / len(words)) * 100
+    return percentage_complex_words
+
+def calculate_fog_index(avg_sentence_length, percentage_complex_words):
+    return 0.4 * (avg_sentence_length + percentage_complex_words)
+
+def calculate_complex_word_count(text):
+    words = word_tokenize(text)
+    complex_words = [word for word in words if textstat.syllable_count(word) > 2]
+    return len(complex_words)
+
+def calculate_word_count(text):
+    words = word_tokenize(text)
+    return len(words)
+
+def calculate_syllables_per_word(text):
+    words = word_tokenize(text)
+    syllables = sum(textstat.syllable_count(word) for word in words)
+    syllables_per_word = syllables / len(words)
+    return syllables_per_word
+
+def calculate_personal_pronouns(text):
+    pronouns = re.findall(r'\b(I|we|my|ours|us)\b', text, re.I)
+    return len(pronouns)
+
+def calculate_avg_word_length(text):
+    words = word_tokenize(text)
+    total_characters = sum(len(word) for word in words)
+    avg_word_length = total_characters / len(words)
+    return avg_word_length
+
+# Unzip and extract stop words files
+stop_words_zip = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/StopWords-20240709T030323Z-001.zip'
+stop_words_directory = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/StopWords'
+with zipfile.ZipFile(stop_words_zip, 'r') as zip_ref:
+    zip_ref.extractall(stop_words_directory)
+
+# Paths for sentiment words files
+positive_words_file = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/positive-words.txt'
+negative_words_file = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/negative-words.txt'
+
+# Load stop words
+stop_words = load_stop_words(stop_words_directory)
+
+# Load positive and negative sentiment words
+positive_words, negative_words = load_sentiment_words(positive_words_file, negative_words_file, stop_words)
+
+# Read the input Excel file containing URLs
+input_file = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/Input.xlsx'
+df = pd.read_excel(input_file)
+
+# Prepare a DataFrame to store the output
+output_df = pd.DataFrame(columns=[
+    'URL_ID', 'URL', 'POSITIVE SCORE', 'NEGATIVE SCORE', 'POLARITY SCORE', 'SUBJECTIVITY SCORE',
+    'AVG SENTENCE LENGTH', 'PERCENTAGE OF COMPLEX WORDS', 'FOG INDEX', 'AVG NUMBER OF WORDS PER SENTENCE',
+    'COMPLEX WORD COUNT', 'WORD COUNT', 'SYLLABLE PER WORD', 'PERSONAL PRONOUNS', 'AVG WORD LENGTH'
+])
+
+# Process each URL
+for index, row in df.iterrows():
+    url_id = row['URL_ID']
+    url = row['URL']
+
+    title, article_text = extract_article(url)
+    save_article(url_id, title, article_text)
+
+    positive_score = calculate_positive_score(article_text, positive_words)
+    negative_score = calculate_negative_score(article_text, negative_words)
+    polarity_score = calculate_polarity_score(positive_score, negative_score)
+    subjectivity_score = calculate_subjectivity_score(positive_score, negative_score, article_text)
+    avg_sentence_length = calculate_avg_sentence_length(article_text)
+    percentage_complex_words = calculate_percentage_complex_words(article_text)
+    fog_index = calculate_fog_index(avg_sentence_length, percentage_complex_words)
+    complex_word_count = calculate_complex_word_count(article_text)
+    word_count = calculate_word_count(article_text)
+    syllables_per_word = calculate_syllables_per_word(article_text)
+    personal_pronouns = calculate_personal_pronouns(article_text)
+    avg_word_length = calculate_avg_word_length(article_text)
+
+    # Create a new row with the analyzed data
+    new_row = {
+        'URL_ID': url_id,
+        'URL': url,  # Just save the plain URL, we'll handle the hyperlink in Excel writer
+        'POSITIVE SCORE': positive_score,
+        'NEGATIVE SCORE': negative_score,
+        'POLARITY SCORE': polarity_score,
+        'SUBJECTIVITY SCORE': subjectivity_score,
+        'AVG SENTENCE LENGTH': avg_sentence_length,
+        'PERCENTAGE OF COMPLEX WORDS': percentage_complex_words,
+        'FOG INDEX': fog_index,
+        'AVG NUMBER OF WORDS PER SENTENCE': avg_sentence_length,
+        'COMPLEX WORD COUNT': complex_word_count,
+        'WORD COUNT': word_count,
+        'SYLLABLE PER WORD': syllables_per_word,
+        'PERSONAL PRONOUNS': personal_pronouns,
+        'AVG WORD LENGTH': avg_word_length
+    }
+    output_df = pd.concat([output_df, pd.DataFrame([new_row])], ignore_index=True)
+
+# Save the output DataFrame to an Excel file with hyperlinks
+output_file = 'Output Data Structure.xlsx'
+writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
+output_df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+# Access the XlsxWriter workbook and worksheet objects
+workbook = writer.book
+worksheet = writer.sheets['Sheet1']
+
+# Add hyperlinks
+for row_num, url in enumerate(output_df['URL'], start=1):
+    worksheet.write_url(row_num, 1, url)
+
+# Close the writer and save the Excel file
+writer.close()
+
+print("Text analysis and saving complete.")
+
+# we will get output when we run this python code
