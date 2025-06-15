@@ -31,21 +31,21 @@ Execute the Python script. The script will iterate through the URLs, scrape the 
 The script will generate the following outputs:
 3. Individual Article Text Files: For each URL in the input, a text file will be created in the same directory as the script, named after the 'URL_ID' from the input file. These files will contain the scraped article title and content.
 4. Output Data Structure.xlsx: An Excel file will be created containing a table with the following columns for each analyzed article:
-	○ URL_ID: The ID of the article.
-	○ URL: The original URL of the article (with hyperlink).
-	○ POSITIVE SCORE: The calculated positive sentiment score.
-	○ NEGATIVE SCORE: The calculated negative sentiment score.
-	○ POLARITY SCORE: The calculated polarity score.
-	○ SUBJECTIVITY SCORE: The calculated subjectivity score.
-	○ AVG SENTENCE LENGTH: The average number of words per sentence.
-	○ PERCENTAGE OF COMPLEX WORDS: The percentage of complex words in the article.
-	○ FOG INDEX: The calculated Fog Index.
-	○ AVG NUMBER OF WORDS PER SENTENCE: Same as AVG SENTENCE LENGTH.
-	○ COMPLEX WORD COUNT: The total count of complex words.
-	○ WORD COUNT: The total count of words.
-	○ SYLLABLE PER WORD: The average number of syllables per word.
-	○ PERSONAL PRONOUNS: The count of personal pronouns.
-	○ AVG WORD LENGTH: The average number of characters per word.
+	- URL_ID: The ID of the article.
+	- URL: The original URL of the article (with hyperlink).
+	- POSITIVE SCORE: The calculated positive sentiment score.
+	- NEGATIVE SCORE: The calculated negative sentiment score.
+	- POLARITY SCORE: The calculated polarity score.
+	- SUBJECTIVITY SCORE: The calculated subjectivity score.
+	- AVG SENTENCE LENGTH: The average number of words per sentence.
+	- PERCENTAGE OF COMPLEX WORDS: The percentage of complex words in the article.
+	- FOG INDEX: The calculated Fog Index.
+	- AVG NUMBER OF WORDS PER SENTENCE: Same as AVG SENTENCE LENGTH.
+	- COMPLEX WORD COUNT: The total count of complex words.
+	- WORD COUNT: The total count of words.
+	- SYLLABLE PER WORD: The average number of syllables per word.
+	- PERSONAL PRONOUNS: The count of personal pronouns.
+	- AVG WORD LENGTH: The average number of characters per word.
 
 
 # Libraries Used:
