@@ -16,9 +16,9 @@ The main goal of this project is to automate the process of extracting article c
  
 # Project Setup:
 1. Input Data:
-	○ You will need an Excel file containing a list of URLs and their corresponding IDs. The file should have at least two columns: 'URL_ID' and 'URL'.
-	○ Place your input Excel file (e.g., Input.xlsx) in a directory accessible by the script (or update the input_file variable in the script to point to its location).
-	○ You will also need zip files containing stopwords and a master dictionary with positive and negative words. Update the stop_words_zip, master_dict_zip, and the file paths for positive and negative words in the script to point to the locations of your files.
+	- You will need an Excel file containing a list of URLs and their corresponding IDs. The file should have at least two columns: 'URL_ID' and 'URL'.
+	- Place your input Excel file (e.g., Input.xlsx) in a directory accessible by the script (or update the input_file variable in the script to point to its location).
+	- You will also need zip files containing stopwords and a master dictionary with positive and negative words. Update the stop_words_zip, master_dict_zip, and the file paths for positive and negative words in the script to point to the locations of your files.
 
 2. Running the Script:
 	○ Make sure you have all the required libraries installed (as mentioned in the Setup section).
