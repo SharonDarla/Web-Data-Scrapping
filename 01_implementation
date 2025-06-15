@@ -1,8 +1,13 @@
 !pip install xlsxwriter
+pip install nltk pandas beautifulsoup4 requests
+import nltk
+nltk.download('punkt')
+nltk.download('stopwords')
+pip install textstat
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import nltk
 import textstat
 import re
 from nltk.corpus import stopwords
@@ -10,9 +15,20 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 import os
 import zipfile
 
-# Download required NLTK data
-nltk.download('punkt')
-nltk.download('stopwords')
+from google.colab import files
+uploaded = files.upload()
+
+from google.colab import files
+uploaded = files.upload()
+
+from google.colab import files
+uploaded = files.upload()
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+import os
+os.listdir('/content/drive/MyDrive/data_scrapping_project_darla/')
 
 def extract_article(url):
     response = requests.get(url)
@@ -121,15 +137,27 @@ def calculate_avg_word_length(text):
     avg_word_length = total_characters / len(words)
     return avg_word_length
 
+
 # Unzip and extract stop words files
-stop_words_zip = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/StopWords-20240709T030323Z-001.zip'
-stop_words_directory = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/StopWords'
+import zipfile
+stop_words_zip = '/content/drive/MyDrive/data_scrapping_project_darla/StopWords-20250615T145903Z-1-001.zip'
+stop_words_directory = '/content/drive/MyDrive/data_scrapping_project_darla/unzipped_stopwords/'
 with zipfile.ZipFile(stop_words_zip, 'r') as zip_ref:
     zip_ref.extractall(stop_words_directory)
 
 # Paths for sentiment words files
-positive_words_file = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/positive-words.txt'
-negative_words_file = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/negative-words.txt'
+import pandas as pd
+master_dict_zip = '/content/drive/MyDrive/data_scrapping_project_darla/MasterDictionary-20240709T030236Z-001.zip'
+extract_to_master = '/content/drive/MyDrive/data_scrapping_project_darla/unzipped_masterdict/MasterDictionary'
+
+os.makedirs(extract_to_master, exist_ok=True)
+
+with zipfile.ZipFile(master_dict_zip, 'r') as zip_ref:
+    zip_ref.extractall(extract_to_master)
+
+# Now load positive and negative words
+positive_words_file = os.path.join(extract_to_master, 'positive-words.txt')
+negative_words_file = os.path.join(extract_to_master, 'negative-words.txt')
 
 # Load stop words
 stop_words = load_stop_words(stop_words_directory)
@@ -138,7 +166,7 @@ stop_words = load_stop_words(stop_words_directory)
 positive_words, negative_words = load_sentiment_words(positive_words_file, negative_words_file, stop_words)
 
 # Read the input Excel file containing URLs
-input_file = '/content/drive/MyDrive/BlackCoffer_assignment_gajjalabhanu/Input.xlsx'
+input_file = '/content/drive/MyDrive/data_scrapping_project_darla/Input.xlsx'
 df = pd.read_excel(input_file)
 
 # Prepare a DataFrame to store the output
@@ -147,6 +175,11 @@ output_df = pd.DataFrame(columns=[
     'AVG SENTENCE LENGTH', 'PERCENTAGE OF COMPLEX WORDS', 'FOG INDEX', 'AVG NUMBER OF WORDS PER SENTENCE',
     'COMPLEX WORD COUNT', 'WORD COUNT', 'SYLLABLE PER WORD', 'PERSONAL PRONOUNS', 'AVG WORD LENGTH'
 ])
+
+import nltk
+nltk.download('punkt_tab')
+nltk.download('punkt')
+
 
 # Process each URL
 for index, row in df.iterrows():
@@ -207,4 +240,43 @@ writer.close()
 
 print("Text analysis and saving complete.")
 
-# we will get output when we run this python code
+# to visualise and see relations between variables and to understand them
+# A histogram of the Polarity Scores to see the distribution of sentiment across the articles.
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.figure(figsize=(10, 6))
+sns.histplot(output_df['POLARITY SCORE'], bins=20, kde=True)
+plt.title('Distribution of Polarity Scores')
+plt.xlabel('Polarity Score')
+plt.ylabel('Frequency')
+plt.show()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create a scatter plot of Subjectivity vs Polarity Score
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='SUBJECTIVITY SCORE', y='POLARITY SCORE', data=output_df)
+plt.title('Subjectivity Score vs Polarity Score')
+plt.xlabel('Subjectivity Score')
+plt.ylabel('Polarity Score')
+plt.grid(True)
+plt.show()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create a histogram of the Fog Index
+plt.figure(figsize=(10, 6))
+sns.histplot(output_df['FOG INDEX'], bins=20, kde=True)
+plt.title('Distribution of Fog Index')
+plt.xlabel('Fog Index')
+plt.ylabel('Frequency')
+plt.show()
+
+# we will get the output when we run this python code
+#I have implemented this code in google colab by importing datasets that I have uploded in my cloud storage - (google drive) for easier access to datasets in future,
+# and installed in colab environment using [from google.colab import files uploaded = files.upload()] this piece of python script that runs in google colab
+
+
